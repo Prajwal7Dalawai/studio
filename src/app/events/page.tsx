@@ -24,12 +24,14 @@ export default function EventsPage() {
         </p>
       </div>
 
-      <div className="space-y-12 space-x-3">
+      <div className="space-y-12">
         <section>
           <h2 className="font-headline text-2xl font-bold mb-6 text-center">Upcoming Events</h2>
           {upcomingEvents.length > 0 ? (
-            <div className="grid w-fit mx-auto gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {upcomingEvents.map(event => <EventCard key={event.id} event={event} />)}
+            <div className="flex justify-center">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {upcomingEvents.map(event => <EventCard key={event.id} event={event} />)}
+              </div>
             </div>
           ) : (
             <p className="text-muted-foreground text-center">No upcoming events. Check back soon!</p>
@@ -39,8 +41,10 @@ export default function EventsPage() {
         <section>
           <h2 className="font-headline text-2xl font-bold mb-6 text-center">Past Events</h2>
            {pastEvents.length > 0 ? (
-            <div className="grid w-fit mx-auto gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {pastEvents.map(event => <EventCard key={event.id} event={event} />)}
+            <div className="flex justify-center">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {pastEvents.map(event => <EventCard key={event.id} event={event} />)}
+              </div>
             </div>
           ) : (
             <p className="text-muted-foreground text-center">No past events to show.</p>
