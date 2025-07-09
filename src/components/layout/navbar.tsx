@@ -27,7 +27,7 @@ const navLinks = [
 
 export function Navbar() {
   const pathname = usePathname();
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, loading } = useAuth();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -36,6 +36,10 @@ export function Navbar() {
   };
 
   const UserMenu = () => {
+    if (loading) {
+      return <div className="h-10 w-10 rounded-full bg-muted" />;
+    }
+
     if (!isAuthenticated) {
       return (
         <Button asChild>
