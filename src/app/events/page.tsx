@@ -24,7 +24,7 @@ export default function EventsPage() {
         </p>
       </div>
 
-      <div className="space-y-12">
+      <div className="space-y-12 space-x-3">
         <section>
           <h2 className="font-headline text-2xl font-bold mb-6 text-center">Upcoming Events</h2>
           {upcomingEvents.length > 0 ? (
