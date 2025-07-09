@@ -29,7 +29,7 @@ export default function EventsPage() {
           <h2 className="font-headline text-2xl font-bold mb-6 text-center">Upcoming Events</h2>
           {upcomingEvents.length > 0 ? (
             <div className="flex justify-center">
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="inline-grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {upcomingEvents.map(event => <EventCard key={event.id} event={event} />)}
               </div>
             </div>
@@ -42,7 +42,7 @@ export default function EventsPage() {
           <h2 className="font-headline text-2xl font-bold mb-6 text-center">Past Events</h2>
            {pastEvents.length > 0 ? (
             <div className="flex justify-center">
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="inline-grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {pastEvents.map(event => <EventCard key={event.id} event={event} />)}
               </div>
             </div>
