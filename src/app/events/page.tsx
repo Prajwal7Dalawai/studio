@@ -13,7 +13,7 @@ const events = [
 
 export default function EventsPage() {
   const upcomingEvents = events.filter(e => e.status === 'upcoming');
-  const pastEvents = events.filter(e => e.status === 'past');
+  const pastEvents = events.filter(e.status === 'past');
 
   return (
     <div className="container py-12 md:py-16">
@@ -25,7 +25,7 @@ export default function EventsPage() {
       </div>
 
       <div className="space-y-12">
-        <section>
+        <section className="flex flex-col items-center">
           <h2 className="font-headline text-2xl font-bold mb-6">Upcoming Events</h2>
           {upcomingEvents.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -36,7 +36,7 @@ export default function EventsPage() {
           )}
         </section>
 
-        <section>
+        <section className="flex flex-col items-center">
           <h2 className="font-headline text-2xl font-bold mb-6">Past Events</h2>
            {pastEvents.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
