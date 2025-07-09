@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { BookCopy, Bot, Calendar, LogOut, Menu, User, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { useAuth } from "@/hooks/use-auth";
+import { useEffect, useState } from "react";
 
 const navLinks = [
   { href: "/events", label: "Events", icon: <Calendar className="h-5 w-5" /> },
@@ -29,6 +30,12 @@ export function Navbar() {
   const pathname = usePathname();
   const { user, logout, isAuthenticated, loading } = useAuth();
   const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
 
   const handleLogout = () => {
     logout();
@@ -138,7 +145,7 @@ export function Navbar() {
         </nav>
 
         <div className="flex flex-1 items-center justify-end space-x-4">
-          <UserMenu />
+          {isClient ? <UserMenu /> : <div className="h-10 w-10 rounded-full bg-muted" />}
         </div>
       </div>
     </header>
