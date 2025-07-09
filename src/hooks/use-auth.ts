@@ -1,74 +1,90 @@
+
 "use client";
 
-import { useState, useEffect } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+  createElement,
+} from 'react';
+import {
+  onAuthStateChanged,
+  signInWithPopup,
+  signOut,
+  type User as FirebaseUser,
+} from 'firebase/auth';
+import { auth, googleProvider } from '@/lib/firebase';
 
-// This is a mock hook for demonstration purposes.
-// In a real application, you would integrate this with Firebase Authentication.
-
-type User = {
+export type AuthUser = {
   uid: string;
-  name: string;
-  email: string;
+  name: string | null;
+  email: string | null;
   role: 'student' | 'admin';
-  branch: string;
-  year: string;
-  joinedAt: Date;
-  photoURL: string;
+  photoURL: string | null;
 };
 
-const mockAdmin: User = {
-  uid: 'admin-123',
-  name: 'Admin User',
-  email: 'admin@campus.dev',
-  role: 'admin',
-  branch: 'SYSTEM',
-  year: 'N/A',
-  joinedAt: new Date(),
-  photoURL: 'https://placehold.co/100x100.png'
+type AuthContextType = {
+  user: AuthUser | null;
+  loading: boolean;
+  login: () => Promise<void>;
+  logout: () => Promise<void>;
+  isAuthenticated: boolean;
 };
 
-const mockStudent: User = {
-  uid: 'student-456',
-  name: 'Alex Doe',
-  email: 'alex.doe@example.com',
-  role: 'student',
-  branch: 'CSE',
-  year: '3rd',
-  joinedAt: new Date(),
-  photoURL: 'https://placehold.co/100x100.png'
-};
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate checking auth state from localStorage
-    try {
-      const storedUser = localStorage.getItem('campus-companion-user');
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        // Revive date object
-        parsedUser.joinedAt = new Date(parsedUser.joinedAt);
-        setUser(parsedUser);
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (firebaseUser: FirebaseUser | null) => {
+        if (firebaseUser) {
+          const isAdmin =
+            firebaseUser.email === process.env.NEXT_PUBLIC_FIREBASE_ADMIN_EMAIL;
+          setUser({
+            uid: firebaseUser.uid,
+            name: firebaseUser.displayName,
+            email: firebaseUser.email,
+            photoURL: firebaseUser.photoURL,
+            role: isAdmin ? 'admin' : 'student',
+          });
+        } else {
+          setUser(null);
+        }
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to parse user from localStorage", error);
-      localStorage.removeItem('campus-companion-user');
-    }
-    setLoading(false);
+    );
+
+    return () => unsubscribe();
   }, []);
 
-  const login = (role: 'student' | 'admin') => {
-    const userToLogin = role === 'admin' ? mockAdmin : mockStudent;
-    localStorage.setItem('campus-companion-user', JSON.stringify(userToLogin));
-    setUser(userToLogin);
+  const login = async () => {
+    setLoading(true);
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error('Error during sign-in:', error);
+    }
   };
 
-  const logout = () => {
-    localStorage.removeItem('campus-companion-user');
-    setUser(null);
+  const logout = async () => {
+    await signOut(auth);
   };
 
-  return { user, login, logout, isAuthenticated: !!user, loading };
+  const value = { user, loading, login, logout, isAuthenticated: !!user };
+
+  return createElement(AuthContext.Provider, { value }, children);
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

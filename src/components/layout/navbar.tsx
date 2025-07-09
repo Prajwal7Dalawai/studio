@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -17,7 +18,6 @@ import { cn } from "@/lib/utils";
 import { BookCopy, Bot, Calendar, LogOut, Menu, User, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { useAuth } from "@/hooks/use-auth";
-import { useEffect, useState } from "react";
 
 const navLinks = [
   { href: "/events", label: "Events", icon: <Calendar className="h-5 w-5" /> },
@@ -30,21 +30,15 @@ export function Navbar() {
   const pathname = usePathname();
   const { user, logout, isAuthenticated, loading } = useAuth();
   const router = useRouter();
-  const [isClient, setIsClient] = useState(false);
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push('/');
   };
 
   const UserMenu = () => {
     if (loading) {
-      return <div className="h-10 w-10 rounded-full bg-muted" />;
+      return <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />;
     }
 
     if (!isAuthenticated) {
@@ -59,8 +53,8 @@ export function Navbar() {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={user?.photoURL} alt={user?.name ?? ""} data-ai-hint="profile picture" />
-              <AvatarFallback>{user?.name?.[0].toUpperCase()}</AvatarFallback>
+              <AvatarImage src={user?.photoURL ?? undefined} alt={user?.name ?? ""} data-ai-hint="profile picture" />
+              <AvatarFallback>{user?.name?.[0].toUpperCase() ?? 'U'}</AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
@@ -145,7 +139,7 @@ export function Navbar() {
         </nav>
 
         <div className="flex flex-1 items-center justify-end space-x-4">
-          {isClient ? <UserMenu /> : <div className="h-10 w-10 rounded-full bg-muted" />}
+          <UserMenu />
         </div>
       </div>
     </header>

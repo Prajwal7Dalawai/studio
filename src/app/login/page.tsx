@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -6,9 +7,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Logo } from "@/components/logo";
+import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -17,8 +19,8 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, router]);
 
-  const handleLogin = (role: 'student' | 'admin') => {
-    login(role);
+  const handleLogin = async () => {
+    await login();
   };
   
   const GoogleIcon = () => (
@@ -36,19 +38,14 @@ export default function LoginPage() {
           </div>
           <CardTitle className="font-headline text-2xl">Welcome Back</CardTitle>
           <CardDescription>
-            Sign in to access your personalized dashboard.
+            Sign in with Google to continue.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <Button onClick={() => handleLogin('student')} variant="outline" className="w-full">
-            <GoogleIcon /> Continue as Student
+          <Button onClick={handleLogin} disabled={loading} variant="outline" className="w-full">
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
+            Continue with Google
           </Button>
-          <Button onClick={() => handleLogin('admin')} variant="outline" className="w-full">
-            <GoogleIcon /> Continue as Admin
-          </Button>
-          <p className="text-center text-xs text-muted-foreground">
-              This is a mock login for demonstration purposes.
-          </p>
         </CardContent>
       </Card>
     </div>

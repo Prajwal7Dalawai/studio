@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -92,8 +93,8 @@ export default function AssistMePage() {
                   </div>
                   {message.sender === 'user' && user && (
                     <Avatar>
-                      <AvatarImage src={user.photoURL} />
-                      <AvatarFallback>{user.name ? user.name[0] : 'U'}</AvatarFallback>
+                      <AvatarImage src={user.photoURL ?? undefined} />
+                      <AvatarFallback>{user.name ? user.name[0].toUpperCase() : 'U'}</AvatarFallback>
                     </Avatar>
                   )}
                 </div>
