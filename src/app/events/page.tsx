@@ -25,25 +25,25 @@ export default function EventsPage() {
       </div>
 
       <div className="space-y-12">
-        <section className="flex flex-col items-center">
-          <h2 className="font-headline text-2xl font-bold mb-6">Upcoming Events</h2>
+        <section>
+          <h2 className="font-headline text-2xl font-bold mb-6 text-center">Upcoming Events</h2>
           {upcomingEvents.length > 0 ? (
-            <div className="inline-grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid w-fit mx-auto gap-6 md:grid-cols-2 lg:grid-cols-3">
               {upcomingEvents.map(event => <EventCard key={event.id} event={event} />)}
             </div>
           ) : (
-            <p className="text-muted-foreground">No upcoming events. Check back soon!</p>
+            <p className="text-muted-foreground text-center">No upcoming events. Check back soon!</p>
           )}
         </section>
 
-        <section className="flex flex-col items-center">
-          <h2 className="font-headline text-2xl font-bold mb-6">Past Events</h2>
+        <section>
+          <h2 className="font-headline text-2xl font-bold mb-6 text-center">Past Events</h2>
            {pastEvents.length > 0 ? (
-            <div className="inline-grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid w-fit mx-auto gap-6 md:grid-cols-2 lg:grid-cols-3">
               {pastEvents.map(event => <EventCard key={event.id} event={event} />)}
             </div>
           ) : (
-            <p className="text-muted-foreground">No past events to show.</p>
+            <p className="text-muted-foreground text-center">No past events to show.</p>
           )}
         </section>
       </div>
