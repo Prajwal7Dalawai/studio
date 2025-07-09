@@ -16,14 +16,10 @@ import {
   type User as FirebaseUser,
 } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
+import { upsertUser } from '@/lib/firebase/firestore';
+import type { User } from '@/lib/types';
 
-export type AuthUser = {
-  uid: string;
-  name: string | null;
-  email: string | null;
-  role: 'student' | 'admin';
-  photoURL: string | null;
-};
+export type AuthUser = User;
 
 type AuthContextType = {
   user: AuthUser | null;
@@ -42,17 +38,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(
       auth,
-      (firebaseUser: FirebaseUser | null) => {
+      async (firebaseUser: FirebaseUser | null) => {
         if (firebaseUser) {
-          const isAdmin =
-            firebaseUser.email === process.env.NEXT_PUBLIC_FIREBASE_ADMIN_EMAIL;
-          setUser({
-            uid: firebaseUser.uid,
-            name: firebaseUser.displayName,
-            email: firebaseUser.email,
-            photoURL: firebaseUser.photoURL,
-            role: isAdmin ? 'admin' : 'student',
-          });
+          const appUser = await upsertUser(firebaseUser);
+          setUser(appUser);
         } else {
           setUser(null);
         }
@@ -69,6 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error('Error during sign-in:', error);
+      setLoading(false);
     }
   };
 
