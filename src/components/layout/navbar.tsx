@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { BookCopy, Bot, Calendar, LogOut, Menu, User, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/logo";
@@ -99,8 +99,11 @@ export function Navbar() {
                 <span className="sr-only">Toggle Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-              <nav className="flex h-full flex-col p-6">
+            <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0">
+              <SheetHeader className="p-6">
+                  <SheetTitle className="sr-only">Main Menu</SheetTitle>
+              </SheetHeader>
+              <nav className="flex h-full flex-col px-6">
                 <Logo />
                 <div className="mt-8 flex flex-col gap-4">
                   {navLinks.map(({ href, label, icon }) => (
