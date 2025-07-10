@@ -7,22 +7,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { SendHorizonal, Bot } from "lucide-react";
+import { SendHorizonal, Bot, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { assistantChat, type HistoryMessage } from "@/ai/flows/assistant-chat";
 
 type Message = {
-  id: number;
+  id: string;
   text: string;
   sender: 'user' | 'bot';
 };
 
 const initialMessages: Message[] = [
-  { id: 1, text: "Hello! I'm your CampusCompanion AI. How can I assist you with your academic or placement journey today?", sender: 'bot' }
+  { id: '1', text: "Hello! I'm your CampusCompanion AI. How can I assist you with your academic or placement journey today?", sender: 'bot' }
 ];
 
 export default function AssistMePage() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -35,27 +37,46 @@ export default function AssistMePage() {
     }
   }, [messages]);
 
-  const handleSend = () => {
-    if (input.trim() === "") return;
+  const handleSend = async () => {
+    if (input.trim() === "" || isLoading) return;
 
     const userMessage: Message = {
-      id: Date.now(),
+      id: Date.now().toString(),
       text: input,
       sender: 'user',
     };
     
     setMessages(prev => [...prev, userMessage]);
     setInput("");
+    setIsLoading(true);
 
-    // Mock bot response
-    setTimeout(() => {
+    try {
+      // Format messages for the Genkit flow
+      const history: HistoryMessage[] = messages.map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.text }],
+      }));
+
+      const { response } = await assistantChat({ query: input, history });
+
       const botResponse: Message = {
-        id: Date.now() + 1,
-        text: "This is a placeholder response. AI functionality will be integrated soon!",
+        id: (Date.now() + 1).toString(),
+        text: response,
         sender: 'bot',
       };
       setMessages(prev => [...prev, botResponse]);
-    }, 1000);
+
+    } catch (error) {
+      console.error("AI chat failed:", error);
+      const errorResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        text: "Sorry, I'm having trouble connecting right now. Please try again later.",
+        sender: 'bot',
+      };
+      setMessages(prev => [...prev, errorResponse]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -99,6 +120,16 @@ export default function AssistMePage() {
                   )}
                 </div>
               ))}
+              {isLoading && (
+                 <div className="flex items-start gap-3">
+                    <Avatar>
+                        <AvatarFallback className="bg-primary text-primary-foreground"><Bot /></AvatarFallback>
+                    </Avatar>
+                    <div className="bg-muted rounded-lg p-3 text-sm flex items-center">
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                 </div>
+              )}
             </div>
           </ScrollArea>
           <div className="border-t p-4 bg-background">
@@ -109,8 +140,9 @@ export default function AssistMePage() {
                 onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="Ask me anything..."
                 className="flex-1"
+                disabled={isLoading}
               />
-              <Button onClick={handleSend} size="icon" aria-label="Send Message">
+              <Button onClick={handleSend} size="icon" aria-label="Send Message" disabled={isLoading}>
                 <SendHorizonal className="h-5 w-5" />
                 <span className="sr-only">Send</span>
               </Button>
