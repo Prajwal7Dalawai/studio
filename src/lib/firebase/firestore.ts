@@ -4,7 +4,6 @@ import {
   getDoc,
   setDoc,
   updateDoc,
-  arrayUnion,
   serverTimestamp,
   type Timestamp,
 } from 'firebase/firestore';
@@ -33,12 +32,28 @@ export const upsertUser = async (firebaseUser: FirebaseUser) => {
     await setDoc(userRef, newUser);
     return { ...newUser, createdAt: new Date() as any }; // Return a client-side friendly object
   } else {
-    // User exists, return existing data
-    return userSnap.data() as User;
+    // User exists, just update their photoURL and name in case it changed
+    const existingData = userSnap.data() as User;
+    const updatedData: Partial<User> = {};
+    if (existingData.name !== firebaseUser.displayName) {
+      updatedData.name = firebaseUser.displayName;
+    }
+    if (existingData.photoURL !== firebaseUser.photoURL) {
+      updatedData.photoURL = firebaseUser.photoURL;
+    }
+
+    if (Object.keys(updatedData).length > 0) {
+      await updateDoc(userRef, updatedData);
+    }
+    
+    return { ...existingData, ...updatedData };
   }
 };
 
 export const updateUserProfile = async (uid: string, data: Partial<User>) => {
+  if (!uid) {
+    throw new Error("User ID is required to update profile.");
+  }
   const userRef = doc(db, 'users', uid);
   await updateDoc(userRef, data);
 };
