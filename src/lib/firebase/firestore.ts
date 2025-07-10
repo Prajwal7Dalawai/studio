@@ -1,7 +1,10 @@
+
 import {
   doc,
   getDoc,
   setDoc,
+  updateDoc,
+  arrayUnion,
   serverTimestamp,
   type Timestamp,
 } from 'firebase/firestore';
@@ -28,12 +31,14 @@ export const upsertUser = async (firebaseUser: FirebaseUser) => {
     };
 
     await setDoc(userRef, newUser);
-    // Note: serverTimestamp is a sentinel value.
-    // The client-side User object will have a different representation
-    // until it's re-fetched from the server. For this app's purpose, this is fine.
-    return newUser;
+    return { ...newUser, createdAt: new Date() as any }; // Return a client-side friendly object
   } else {
     // User exists, return existing data
     return userSnap.data() as User;
   }
+};
+
+export const updateUserProfile = async (uid: string, data: Partial<User>) => {
+  const userRef = doc(db, 'users', uid);
+  await updateDoc(userRef, data);
 };

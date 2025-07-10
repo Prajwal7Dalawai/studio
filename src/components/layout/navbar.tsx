@@ -68,6 +68,10 @@ export function Navbar() {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => router.push('/profile')}>
+            <User className="mr-2 h-4 w-4" />
+            <span>Profile</span>
+          </DropdownMenuItem>
           {user?.role === 'admin' && (
             <DropdownMenuItem onClick={() => router.push('/admin')}>
               <ShieldCheck className="mr-2 h-4 w-4" />
@@ -99,13 +103,13 @@ export function Navbar() {
                 <span className="sr-only">Toggle Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0">
-              <SheetHeader className="p-6">
-                  <SheetTitle className="sr-only">Main Menu</SheetTitle>
+            <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+              <SheetHeader className="p-6 border-b">
+                 <Logo />
+                 <SheetTitle className="sr-only">Main Menu</SheetTitle>
               </SheetHeader>
-              <nav className="flex h-full flex-col px-6">
-                <Logo />
-                <div className="mt-8 flex flex-col gap-4">
+              <nav className="flex h-full flex-col p-6">
+                <div className="flex flex-col gap-4">
                   {navLinks.map(({ href, label, icon }) => (
                     <Link
                       key={href}

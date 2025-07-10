@@ -1,15 +1,24 @@
+
+"use client";
+
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, Calendar, User } from "lucide-react";
+import { ArrowRight, Calendar, User, CheckCircle, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { registerForEvent } from "@/lib/firebase/events";
 
 const events = [
-  { id: 1, title: "Next.js 15 Deep Dive", date: "2024-10-26", description: "Explore the latest features of Next.js 15 with our expert speakers.", status: "upcoming", speakers: ["Lee Robinson"], winners: [], resources: "#" },
-  { id: 2, title: "AI with Gemini Workshop", date: "2024-09-15", description: "A hands-on workshop on building applications with Google's Gemini API.", status: "past", speakers: ["Debbie O'Brien"], winners: ["Team Innovate"], resources: "#" },
-  { id: 3, title: "Firebase for Startups", date: "2024-08-20", description: "Learn how to leverage Firebase to build and scale your startup.", status: "past", speakers: ["Frank van Puffelen"], winners: ["Team ScaleUp"], resources: "#" },
-  { id: 4, title: "Flutter Festival", date: "2025-01-18", description: "Join us for a full day of talks and codelabs on Flutter and Dart.", status: "upcoming", speakers: ["Majid Hajian", "Rody Davis"], winners: [], resources: "#" },
+  { id: "evt001", title: "Next.js 15 Deep Dive", date: "2024-10-26", description: "Explore the latest features of Next.js 15 with our expert speakers.", status: "upcoming", speakers: ["Lee Robinson"], winners: [], resources: "#", participants: ["user1"] },
+  { id: "evt002", title: "AI with Gemini Workshop", date: "2024-09-15", description: "A hands-on workshop on building applications with Google's Gemini API.", status: "past", speakers: ["Debbie O'Brien"], winners: ["Team Innovate"], resources: "#", participants: [] },
+  { id: "evt003", title: "Firebase for Startups", date: "2024-08-20", description: "Learn how to leverage Firebase to build and scale your startup.", status: "past", speakers: ["Frank van Puffelen"], winners: ["Team ScaleUp"], resources: "#", participants: [] },
+  { id: "evt004", title: "Flutter Festival", date: "2025-01-18", description: "Join us for a full day of talks and codelabs on Flutter and Dart.", status: "upcoming", speakers: ["Majid Hajian", "Rody Davis"], winners: [], resources: "#", participants: [] },
 ];
+
+type Event = (typeof events)[0];
 
 export default function EventsPage() {
   const upcomingEvents = events.filter(e => e.status === 'upcoming');
@@ -55,7 +64,32 @@ export default function EventsPage() {
   );
 }
 
-function EventCard({ event }: { event: (typeof events)[0] }) {
+function EventCard({ event }: { event: Event }) {
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const [isRegistering, setIsRegistering] = useState(false);
+  
+  const isRegistered = user ? event.participants.includes(user.uid) : false;
+
+  const handleRegister = async () => {
+    if (!isAuthenticated || !user) {
+      toast({ title: "Please login to register.", variant: "destructive" });
+      return;
+    }
+    setIsRegistering(true);
+    try {
+      await registerForEvent(event.id, user.uid);
+      // Note: In a real app, you'd re-fetch events or update state optimistically
+      // For now, we just show a success message.
+      toast({ title: "Successfully registered!", description: `You are now registered for ${event.title}.` });
+    } catch (error) {
+      console.error("Registration failed", error);
+      toast({ title: "Registration failed", description: "Please try again later.", variant: "destructive" });
+    } finally {
+      setIsRegistering(false);
+    }
+  };
+
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-transform transform-gpu hover:scale-[1.02] hover:shadow-xl">
       <CardHeader>
@@ -96,7 +130,20 @@ function EventCard({ event }: { event: (typeof events)[0] }) {
             </div>
         )}
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex justify-between items-center">
+        {event.status === 'upcoming' && (
+          isRegistered ? (
+            <Button disabled variant="secondary" className="cursor-default">
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Registered
+            </Button>
+          ) : (
+            <Button onClick={handleRegister} disabled={isRegistering}>
+              {isRegistering ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Register
+            </Button>
+          )
+        )}
         <Button asChild variant="link" className="p-0">
           <Link href={event.resources}>
             View Resources <ArrowRight className="w-4 h-4 ml-2" />
