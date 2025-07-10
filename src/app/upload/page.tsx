@@ -249,7 +249,7 @@ function PlacementForm() {
             await uploadPlacementContent(values, user.uid);
             toast({ title: "Success", description: "Placement content uploaded successfully!" });
             form.reset();
-        } catch (error)
+        } catch (error) {
             console.error(error);
             toast({ title: "Error", description: "Failed to upload content.", variant: "destructive" });
         }
@@ -286,5 +286,7 @@ function PlacementForm() {
         </Form>
     )
 }
+
+    
 
     
