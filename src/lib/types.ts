@@ -1,3 +1,4 @@
+
 import type { Timestamp } from 'firebase/firestore';
 
 export type User = {
@@ -17,9 +18,9 @@ export type Event = {
   date: Timestamp;
   description: string;
   status: 'upcoming' | 'past';
- participants: string[];
+  participants: string[];
   speakers: string[];
- winners: string[];
+  winners: string[];
   resources?: string;
   createdAt: Timestamp;
 };

@@ -1,4 +1,9 @@
+
 "use client";
+
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +12,35 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ShieldAlert, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { uploadEvent, uploadResource, uploadPlacementContent } from "@/lib/firebase/admin";
+
+// Schemas for form validation
+const eventFormSchema = z.object({
+    title: z.string().min(5, "Title must be at least 5 characters"),
+    date: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date" }),
+    description: z.string().min(10, "Description must be at least 10 characters"),
+    speakers: z.string().min(1, "At least one speaker is required"),
+    resources: z.string().url("Please enter a valid URL").optional().or(z.literal('')),
+});
+
+const resourceFormSchema = z.object({
+    title: z.string().min(5, "Title must be at least 5 characters"),
+    type: z.enum(["Notes", "PYQ"]),
+    branch: z.string().min(1, "Branch is required"),
+    semester: z.string().min(1, "Semester is required"),
+    subject: z.string().min(2, "Subject is required"),
+    file: z.instanceof(File).refine(file => file.size > 0, 'File is required.'),
+});
+
+const placementFormSchema = z.object({
+    targetYear: z.enum(["2nd-year", "3rd-year", "4th-year"]),
+    title: z.string().min(5, "Title must be at least 5 characters"),
+    content: z.string().min(20, "Content must be at least 20 characters"),
+});
 
 export default function AdminPage() {
     const { user, loading } = useAuth();
@@ -80,87 +113,186 @@ function AdminFormCard({ title, description, children }: { title: string, descri
 }
 
 function EventForm() {
+    const { toast } = useToast();
+    const { user } = useAuth();
+    const form = useForm<z.infer<typeof eventFormSchema>>({
+        resolver: zodResolver(eventFormSchema),
+        defaultValues: { title: "", date: "", description: "", speakers: "", resources: "" },
+    });
+
+    async function onSubmit(values: z.infer<typeof eventFormSchema>) {
+        if (!user) return;
+        try {
+            await uploadEvent({ ...values, speakers: values.speakers.split(',').map(s => s.trim()) }, user.uid);
+            toast({ title: "Success", description: "Event uploaded successfully!" });
+            form.reset();
+        } catch (error) {
+            console.error(error);
+            toast({ title: "Error", description: "Failed to upload event.", variant: "destructive" });
+        }
+    }
+
     return (
-        <form className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="event-title">Event Title</Label>
-                    <Input id="event-title" placeholder="e.g., Next.js Conf" />
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="title" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Event Title</FormLabel>
+                            <FormControl><Input placeholder="e.g., Next.js Conf" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                    <FormField control={form.control} name="date" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Event Date</FormLabel>
+                            <FormControl><Input type="date" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="event-date">Event Date</Label>
-                    <Input id="event-date" type="date" />
-                </div>
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="event-description">Description</Label>
-                <Textarea id="event-description" placeholder="A brief summary of the event..."/>
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="event-speakers">Speakers (comma-separated)</Label>
-                <Input id="event-speakers" placeholder="e.g., Vercel, Google" />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="event-resources">Resource Link</Label>
-                <Input id="event-resources" type="url" placeholder="https://example.com/resources" />
-            </div>
-            <Button type="submit">Upload Event</Button>
-        </form>
+                <FormField control={form.control} name="description" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl><Textarea placeholder="A brief summary of the event..." {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+                <FormField control={form.control} name="speakers" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Speakers (comma-separated)</FormLabel>
+                        <FormControl><Input placeholder="e.g., Vercel, Google" {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+                <FormField control={form.control} name="resources" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Resource Link</FormLabel>
+                        <FormControl><Input type="url" placeholder="https://example.com/resources" {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Upload Event
+                </Button>
+            </form>
+        </Form>
     );
 }
 
 function ResourceForm() {
+    const { toast } = useToast();
+    const { user } = useAuth();
+    const form = useForm<z.infer<typeof resourceFormSchema>>({
+        resolver: zodResolver(resourceFormSchema),
+        defaultValues: { title: "", branch: "", semester: "", subject: "" },
+    });
+
+    async function onSubmit(values: z.infer<typeof resourceFormSchema>) {
+        if (!user) return;
+        try {
+            await uploadResource(values, user.uid);
+            toast({ title: "Success", description: "Resource uploaded successfully!" });
+            form.reset();
+        } catch (error) {
+            console.error(error);
+            toast({ title: "Error", description: "Failed to upload resource.", variant: "destructive" });
+        }
+    }
+    
     return (
-        <form className="space-y-4">
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="res-title">Resource Title</Label>
-                    <Input id="res-title" placeholder="e.g., DSA Final Notes" />
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="title" render={({ field }) => (
+                        <FormItem><FormLabel>Resource Title</FormLabel><FormControl><Input placeholder="e.g., DSA Final Notes" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                     <FormField control={form.control} name="type" render={({ field }) => (
+                        <FormItem><FormLabel>Resource Type</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="Select resource type" /></SelectTrigger></FormControl>
+                                <SelectContent><SelectItem value="Notes">Notes</SelectItem><SelectItem value="PYQ">Question Paper (PYQ)</SelectItem></SelectContent>
+                            </Select>
+                        <FormMessage /></FormItem>
+                    )} />
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="res-type">Resource Type</Label>
-                    <Input id="res-type" placeholder="e.g., Notes or PYQ" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField control={form.control} name="branch" render={({ field }) => (
+                        <FormItem><FormLabel>Branch</FormLabel><FormControl><Input placeholder="e.g., CSE" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="semester" render={({ field }) => (
+                        <FormItem><FormLabel>Semester</FormLabel><FormControl><Input type="number" placeholder="e.g., 3" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="subject" render={({ field }) => (
+                        <FormItem><FormLabel>Subject</FormLabel><FormControl><Input placeholder="e.g., Data Structures" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
                 </div>
-            </div>
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="res-branch">Branch</Label>
-                    <Input id="res-branch" placeholder="e.g., CSE" />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="res-semester">Semester</Label>
-                    <Input id="res-semester" placeholder="e.g., 3" />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="res-subject">Subject</Label>
-                    <Input id="res-subject" placeholder="e.g., Data Structures" />
-                </div>
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="res-url">Resource URL / File</Label>
-                <Input id="res-url" type="file" />
-            </div>
-            <Button type="submit">Upload Resource</Button>
-        </form>
+                 <FormField control={form.control} name="file" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Resource File</FormLabel>
+                        <FormControl>
+                            <Input type="file" onChange={(e) => field.onChange(e.target.files?.[0])} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Upload Resource
+                </Button>
+            </form>
+        </Form>
     )
 }
 
 function PlacementForm() {
+    const { toast } = useToast();
+    const { user } = useAuth();
+    const form = useForm<z.infer<typeof placementFormSchema>>({
+        resolver: zodResolver(placementFormSchema),
+    });
+
+    async function onSubmit(values: z.infer<typeof placementFormSchema>) {
+         if (!user) return;
+        try {
+            await uploadPlacementContent(values, user.uid);
+            toast({ title: "Success", description: "Placement content uploaded successfully!" });
+            form.reset();
+        } catch (error) {
+            console.error(error);
+            toast({ title: "Error", description: "Failed to upload content.", variant: "destructive" });
+        }
+    }
+
     return (
-        <form className="space-y-4">
-            <div className="space-y-2">
-                <Label htmlFor="placement-year">Target Year</Label>
-                <Input id="placement-year" placeholder="e.g., 2nd-year, 3rd-year" />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="placement-title">Content Title</Label>
-                <Input id="placement-title" placeholder="e.g., Deep Dive into DSA" />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="placement-content">Content Body</Label>
-                <Textarea id="placement-content" placeholder="Write the guidance here..."/>
-            </div>
-            <Button type="submit">Update Content</Button>
-        </form>
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                 <FormField control={form.control} name="targetYear" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Target Year</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Select target year" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                                <SelectItem value="2nd-year">2nd Year</SelectItem>
+                                <SelectItem value="3rd-year">3rd Year</SelectItem>
+                                <SelectItem value="4th-year">4th Year</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+                <FormField control={form.control} name="title" render={({ field }) => (
+                    <FormItem><FormLabel>Content Title</FormLabel><FormControl><Input placeholder="e.g., Deep Dive into DSA" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="content" render={({ field }) => (
+                    <FormItem><FormLabel>Content Body</FormLabel><FormControl><Textarea placeholder="Write the guidance here..." rows={8} {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Update Content
+                </Button>
+            </form>
+        </Form>
     )
 }
