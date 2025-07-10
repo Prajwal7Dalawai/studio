@@ -40,11 +40,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       auth,
       async (firebaseUser: FirebaseUser | null) => {
         if (firebaseUser) {
-          console.log("Auth state changed, user found. Upserting...");
           const appUser = await upsertUser(firebaseUser);
           setUser(appUser);
         } else {
-          console.log("Auth state changed, no user.");
           setUser(null);
         }
         setLoading(false);
@@ -56,35 +54,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async () => {
     setLoading(true);
-    console.log('Attempting to sign in with popup...');
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      console.log('signInWithPopup successful.');
-      // The onAuthStateChanged listener will handle the user creation,
-      // but we can stop the loading state here.
-      // The listener might take a moment to fire, so we prevent a UI flicker.
-      if (!user) {
-         const appUser = await upsertUser(result.user);
-         setUser(appUser);
-      }
+      // The onAuthStateChanged listener will handle the result.
+      await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error('Error during sign-in:', error);
-    } finally {
-        setLoading(false);
+      // Ensure loading is turned off even if there's an error.
+      setLoading(false);
     }
   };
 
   const logout = async () => {
-    console.log('Attempting to sign out...');
-    setLoading(true);
     try {
       await signOut(auth);
-      console.log('Sign out successful.');
-      setUser(null);
+      // The onAuthStateChanged listener will set user to null.
     } catch (error) {
       console.error('Error during sign-out:', error);
-    } finally {
-        setLoading(false);
     }
   };
 
