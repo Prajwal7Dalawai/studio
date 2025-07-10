@@ -1,3 +1,4 @@
+
 // src/ai/flows/assistant-chat.ts
 'use server';
 
@@ -11,7 +12,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import {generate} from 'genkit/generate';
 
 // Define the structure for a single message part (in this case, just text)
 const MessagePartSchema = z.object({
@@ -51,7 +51,7 @@ const assistantChatFlow = ai.defineFlow(
   },
   async ({ query, history }) => {
     
-    const llmResponse = await generate({
+    const llmResponse = await ai.generate({
       model: 'googleai/gemini-1.5-flash',
       prompt: query,
       history,
@@ -65,7 +65,7 @@ const assistantChatFlow = ai.defineFlow(
       If a question is outside of your scope as a campus assistant, politely decline to answer.`,
     });
 
-    const responseText = llmResponse.text();
+    const responseText = llmResponse.text;
 
     return { response: responseText };
   }
