@@ -12,13 +12,12 @@ import {
 } from 'react';
 import {
   onAuthStateChanged,
-  signInWithRedirect,
+  signInWithPopup,
   signOut,
-  getRedirectResult,
   type User as FirebaseUser,
 } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
-import { upsertUser, updateUserProfile } from '@/lib/firebase/firestore';
+import { upsertUser } from '@/lib/firebase/firestore';
 import type { User } from '@/lib/types';
 
 export type AuthUser = User;
@@ -47,42 +46,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    const handleAuthentication = async () => {
-      setLoading(true);
-      try {
-        const result = await getRedirectResult(auth);
-        if (result && result.user) {
-          const appUser = await upsertUser(result.user);
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      async (firebaseUser: FirebaseUser | null) => {
+        if (firebaseUser) {
+          const appUser = await upsertUser(firebaseUser);
           setUser(appUser);
+        } else {
+          setUser(null);
         }
-      } catch (error) {
-        console.error("Error processing redirect result:", error);
+        setLoading(false);
       }
+    );
 
-      const unsubscribe = onAuthStateChanged(
-        auth,
-        async (firebaseUser: FirebaseUser | null) => {
-          if (firebaseUser) {
-            // Check if user state is already set to avoid redundant fetches
-            if (!user || user.uid !== firebaseUser.uid) {
-               const appUser = await upsertUser(firebaseUser);
-               setUser(appUser);
-            }
-          } else {
-            setUser(null);
-          }
-          setLoading(false);
-        }
-      );
-      return unsubscribe;
-    };
-
-    handleAuthentication();
-  }, [user]);
+    return () => unsubscribe();
+  }, []);
 
   const login = async () => {
     setLoading(true);
-    await signInWithRedirect(auth, googleProvider);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      if (result.user) {
+        const appUser = await upsertUser(result.user);
+        setUser(appUser);
+      }
+    } catch (error) {
+      console.error("Authentication failed", error);
+      // setUser(null) is not needed here as onAuthStateChanged will handle it
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = async () => {
