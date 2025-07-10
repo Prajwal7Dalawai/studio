@@ -18,7 +18,7 @@ export default function Home() {
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
                   {user && (
-                    <h2 className="text-2xl font-semibold">Welcome, {user.displayName || 'User'}</h2>
+                    <h2 className="text-2xl font-semibold">Welcome, {user.name || 'User'}</h2>
                   )}
                   <h1 className="font-headline text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
                     Your Ultimate <span className="text-primary">CampusCompanion</span>
