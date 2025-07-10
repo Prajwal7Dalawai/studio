@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,17 +10,53 @@ import { ArrowRight, Calendar, User, CheckCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { registerForEvent } from "@/lib/firebase/events";
+import { collection, getDocs, onSnapshot, query, orderBy, Timestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import type { Event as EventType } from "@/lib/types";
 
-const events = [
-  { id: "evt001", title: "Next.js 15 Deep Dive", date: "2024-10-26", description: "Explore the latest features of Next.js 15 with our expert speakers.", status: "upcoming", speakers: ["Lee Robinson"], winners: [], resources: "#", participants: ["user1"] },
-  { id: "evt002", title: "AI with Gemini Workshop", date: "2024-09-15", description: "A hands-on workshop on building applications with Google's Gemini API.", status: "past", speakers: ["Debbie O'Brien"], winners: ["Team Innovate"], resources: "#", participants: [] },
-  { id: "evt003", title: "Firebase for Startups", date: "2024-08-20", description: "Learn how to leverage Firebase to build and scale your startup.", status: "past", speakers: ["Frank van Puffelen"], winners: ["Team ScaleUp"], resources: "#", participants: [] },
-  { id: "evt004", title: "Flutter Festival", date: "2025-01-18", description: "Join us for a full day of talks and codelabs on Flutter and Dart.", status: "upcoming", speakers: ["Majid Hajian", "Rody Davis"], winners: [], resources: "#", participants: [] },
-];
-
-type Event = (typeof events)[0];
+// Convert Firestore timestamp to a JS Date object, handling different timestamp formats.
+const toDate = (timestamp: Timestamp | Date): Date => {
+  if (timestamp instanceof Timestamp) {
+    return timestamp.toDate();
+  }
+  return timestamp;
+};
 
 export default function EventsPage() {
+  const [events, setEvents] = useState<EventType[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(collection(db, "events"), orderBy("date", "desc"));
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const fetchedEvents: EventType[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        fetchedEvents.push({ 
+            id: doc.id,
+            ...data,
+            date: toDate(data.date as Timestamp)
+        } as EventType);
+      });
+      setEvents(fetchedEvents);
+      setLoading(false);
+    }, (error) => {
+        console.error("Error fetching events: ", error);
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+  
   const upcomingEvents = events.filter(e => e.status === 'upcoming');
   const pastEvents = events.filter(e => e.status === 'past');
 
@@ -64,12 +100,12 @@ export default function EventsPage() {
   );
 }
 
-function EventCard({ event }: { event: Event }) {
+function EventCard({ event }: { event: EventType }) {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [isRegistering, setIsRegistering] = useState(false);
   
-  const isRegistered = user ? event.participants.includes(user.uid) : false;
+  const isRegistered = user && event.participants ? event.participants.includes(user.uid) : false;
 
   const handleRegister = async () => {
     if (!isAuthenticated || !user) {
@@ -79,8 +115,6 @@ function EventCard({ event }: { event: Event }) {
     setIsRegistering(true);
     try {
       await registerForEvent(event.id, user.uid);
-      // Note: In a real app, you'd re-fetch events or update state optimistically
-      // For now, we just show a success message.
       toast({ title: "Successfully registered!", description: `You are now registered for ${event.title}.` });
     } catch (error) {
       console.error("Registration failed", error);
@@ -89,6 +123,8 @@ function EventCard({ event }: { event: Event }) {
       setIsRegistering(false);
     }
   };
+  
+  const eventDate = toDate(event.date);
 
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-transform transform-gpu hover:scale-[1.02] hover:shadow-xl">
@@ -101,7 +137,7 @@ function EventCard({ event }: { event: Event }) {
         <CardTitle className="font-headline pt-2">{event.title}</CardTitle>
         <CardDescription className="flex items-center gap-2 text-sm">
             <Calendar className="w-4 h-4" />
-            {new Date(event.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+            {eventDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
@@ -117,7 +153,7 @@ function EventCard({ event }: { event: Event }) {
                 ))}
             </div>
         </div>
-        {event.winners.length > 0 && (
+        {event.winners && event.winners.length > 0 && (
              <div className="mt-4">
                 <h4 className="text-sm font-semibold mb-2">Winners</h4>
                 <div className="flex flex-wrap gap-2">
@@ -145,7 +181,7 @@ function EventCard({ event }: { event: Event }) {
           )
         )}
         <Button asChild variant="link" className="p-0">
-          <Link href={event.resources}>
+          <Link href={event.resources || '#'}>
             View Resources <ArrowRight className="w-4 h-4 ml-2" />
           </Link>
         </Button>
