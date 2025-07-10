@@ -1,0 +1,32 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Users can read, create, and update their own profile
+    match /users/{userId} {
+      allow read, create, update: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Any authenticated user can read and update events
+    match /events/{eventId} {
+      allow read, update: if request.auth != null;
+    }
+
+    // Rules for Academic Resources
+    match /resources/{resourceId} {
+      // Anyone can read resources
+      allow read: if true;
+      // Only admins can create, update, or delete resources
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Rules for Placement Content
+    match /placementContent/{contentId} {
+      // Anyone can read placement content
+      allow read: if true;
+      // Only admins can create, update, or delete content
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}
