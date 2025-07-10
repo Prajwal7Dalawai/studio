@@ -17,10 +17,10 @@ export default function Home() {
             <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
+                  {user && (
+                    <h2 className="text-2xl font-semibold">Welcome, {user.displayName || 'User'}</h2>
+                  )}
                   <h1 className="font-headline text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                    {user && (
-                      <h2 className="text-2xl font-semibold">Welcome, {user.displayName || 'User'}</h2>
-                    )}
                     Your Ultimate <span className="text-primary">CampusCompanion</span>
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl">
