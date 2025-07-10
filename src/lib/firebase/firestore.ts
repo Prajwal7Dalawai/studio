@@ -51,9 +51,6 @@ export const upsertUser = async (firebaseUser: FirebaseUser) => {
 };
 
 export const updateUserProfile = async (uid: string, data: Partial<User>) => {
-  if (!uid) {
-    throw new Error("User ID is required to update profile.");
-  }
   const userRef = doc(db, 'users', uid);
   await updateDoc(userRef, data);
 };
