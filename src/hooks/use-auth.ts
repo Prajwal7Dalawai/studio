@@ -37,37 +37,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // This function runs once when the component mounts to check for a redirect result.
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result && result.user) {
+          // If there's a result, a user has just signed in via redirect.
+          // We upsert the user to Firestore and update our state.
+          const appUser = await upsertUser(result.user);
+          setUser(appUser);
+        }
+      } catch (error) {
+        console.error("Error processing redirect result:", error);
+      }
+    };
+
+    handleRedirectResult();
+
     const unsubscribe = onAuthStateChanged(
       auth,
       async (firebaseUser: FirebaseUser | null) => {
         if (firebaseUser) {
-          const appUser = await upsertUser(firebaseUser);
-          setUser(appUser);
-        } else {
-          // This will handle the case where the page loads after a redirect
-          // and the user is being authenticated.
-          try {
-            const result = await getRedirectResult(auth);
-            if (result?.user) {
-              const appUser = await upsertUser(result.user);
-              setUser(appUser);
-            }
-          } catch (error) {
-            console.error("Error getting redirect result:", error);
+          // This handles subsequent auth state changes, e.g., page reloads for an already logged-in user.
+          if (!user) { // Only run upsert if user is not already set by redirect result
+            const appUser = await upsertUser(firebaseUser);
+            setUser(appUser);
           }
+        } else {
+          setUser(null);
         }
         setLoading(false);
       }
     );
 
+    // Cleanup the subscription on unmount
     return () => unsubscribe();
-  }, []);
+  }, []); // The empty dependency array ensures this effect runs only once on mount.
 
   const login = async () => {
     setLoading(true);
     try {
+      // Start the redirect flow
       await signInWithRedirect(auth, googleProvider);
-      // The page will redirect, and the onAuthStateChanged listener will handle the result.
     } catch (error) {
       console.error('Error during sign-in redirect:', error);
       setLoading(false);
