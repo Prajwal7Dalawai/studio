@@ -40,12 +40,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       auth,
       async (firebaseUser: FirebaseUser | null) => {
         if (firebaseUser) {
+          console.log("Auth state changed, user found. Upserting...");
           const appUser = await upsertUser(firebaseUser);
           setUser(appUser);
         } else {
+          console.log("Auth state changed, no user.");
           setUser(null);
         }
-        console.log("Auth state changed. Current user:", firebaseUser);
         setLoading(false);
       }
     );
@@ -53,32 +54,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
+  const login = async () => {
+    setLoading(true);
+    console.log('Attempting to sign in with popup...');
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log('signInWithPopup successful.');
+      // The onAuthStateChanged listener will handle the user creation,
+      // but we can stop the loading state here.
+      // The listener might take a moment to fire, so we prevent a UI flicker.
+      if (!user) {
+         const appUser = await upsertUser(result.user);
+         setUser(appUser);
+      }
+    } catch (error) {
+      console.error('Error during sign-in:', error);
+    } finally {
+        setLoading(false);
+    }
+  };
+
   const logout = async () => {
     console.log('Attempting to sign out...');
     setLoading(true);
     try {
       await signOut(auth);
       console.log('Sign out successful.');
+      setUser(null);
     } catch (error) {
       console.error('Error during sign-out:', error);
-      setLoading(false);
+    } finally {
+        setLoading(false);
     }
   };
 
-  const login = async () => {
-    console.log('Attempting to sign in with popup...');
-    setLoading(true);
-    try {
-      await signInWithPopup(auth, googleProvider);
-      console.log('signInWithPopup successful.');
-    } catch (error) {
-      console.error('Error during sign-in:', error);
-      // In case of error, we should stop the loading state.
-      setLoading(false);
-    }
-  };
 
-  const value = { user, loading, login, logout, isAuthenticated: !!user };
+  const value = { user, loading, login, logout, isAuthenticated: !!user && !loading };
 
   return createElement(AuthContext.Provider, { value }, children);
 };
