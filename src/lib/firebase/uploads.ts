@@ -13,7 +13,7 @@ export const uploadEvent = async (eventData: EventInput, userId: string) => {
         ...eventData,
         date: Timestamp.fromDate(eventDate),
         status: eventDate > new Date() ? 'upcoming' : 'past',
-        participants: [],
+        participants: [], // Explicitly initialize as an empty array
         winners: [],
         createdAt: serverTimestamp(),
         uploadedBy: userId,
