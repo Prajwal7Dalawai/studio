@@ -11,8 +11,9 @@ import {
 } from 'react';
 import {
   onAuthStateChanged,
-  signInWithPopup,
+  signInWithRedirect,
   signOut,
+  getRedirectResult,
   type User as FirebaseUser,
 } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
@@ -43,7 +44,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const appUser = await upsertUser(firebaseUser);
           setUser(appUser);
         } else {
-          setUser(null);
+          // This will handle the case where the page loads after a redirect
+          // and the user is being authenticated.
+          try {
+            const result = await getRedirectResult(auth);
+            if (result?.user) {
+              const appUser = await upsertUser(result.user);
+              setUser(appUser);
+            }
+          } catch (error) {
+            console.error("Error getting redirect result:", error);
+          }
         }
         setLoading(false);
       }
@@ -55,11 +66,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async () => {
     setLoading(true);
     try {
-      // The onAuthStateChanged listener will handle the result.
-      await signInWithPopup(auth, googleProvider);
+      await signInWithRedirect(auth, googleProvider);
+      // The page will redirect, and the onAuthStateChanged listener will handle the result.
     } catch (error) {
-      console.error('Error during sign-in:', error);
-      // Ensure loading is turned off even if there's an error.
+      console.error('Error during sign-in redirect:', error);
       setLoading(false);
     }
   };
@@ -67,7 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       await signOut(auth);
-      // The onAuthStateChanged listener will set user to null.
+      setUser(null);
     } catch (error) {
       console.error('Error during sign-out:', error);
     }
