@@ -2,8 +2,7 @@
 'use server';
 
 import { collection, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import type { Event, Resource, PlacementContent } from '@/lib/types';
 
 // Event Upload
@@ -23,19 +22,12 @@ export const uploadEvent = async (eventData: EventInput, userId: string) => {
 
 
 // Resource Upload
-type ResourceInput = Omit<Resource, 'id' | 'createdAt' | 'uploadedBy' | 'url'> & { file: File };
+type ResourceInput = Omit<Resource, 'id' | 'createdAt' | 'uploadedBy' | 'url'>;
 export const uploadResource = async (resourceData: ResourceInput, userId: string) => {
-    const { file, ...restOfData } = resourceData;
-
-    // Upload file to Firebase Storage
-    const storageRef = ref(storage, `resources/${userId}/${Date.now()}-${file.name}`);
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-
-    // Add resource metadata to Firestore
+    // Add resource metadata to Firestore with a dummy URL
     await addDoc(collection(db, 'resources'), {
-        ...restOfData,
-        url: downloadURL,
+        ...resourceData,
+        url: "#", // Using a dummy link as requested
         uploadedBy: userId,
         createdAt: serverTimestamp(),
     });
@@ -50,3 +42,5 @@ export const uploadPlacementContent = async (contentData: PlacementContentInput,
         createdAt: serverTimestamp(),
     });
 };
+
+    

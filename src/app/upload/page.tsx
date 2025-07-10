@@ -33,7 +33,6 @@ const resourceFormSchema = z.object({
     branch: z.string().min(1, "Branch is required"),
     semester: z.string().min(1, "Semester is required"),
     subject: z.string().min(2, "Subject is required"),
-    file: z.instanceof(File).refine(file => file.size > 0, 'File is required.'),
 });
 
 const placementFormSchema = z.object({
@@ -228,15 +227,6 @@ function ResourceForm() {
                         <FormItem><FormLabel>Subject</FormLabel><FormControl><Input placeholder="e.g., Data Structures" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                 </div>
-                 <FormField control={form.control} name="file" render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Resource File</FormLabel>
-                        <FormControl>
-                            <Input type="file" onChange={(e) => field.onChange(e.target.files?.[0])} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )} />
                 <Button type="submit" disabled={form.formState.isSubmitting}>
                     {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Upload Resource
@@ -259,7 +249,7 @@ function PlacementForm() {
             await uploadPlacementContent(values, user.uid);
             toast({ title: "Success", description: "Placement content uploaded successfully!" });
             form.reset();
-        } catch (error) {
+        } catch (error)
             console.error(error);
             toast({ title: "Error", description: "Failed to upload content.", variant: "destructive" });
         }
@@ -296,3 +286,5 @@ function PlacementForm() {
         </Form>
     )
 }
+
+    
