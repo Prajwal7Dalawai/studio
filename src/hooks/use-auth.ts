@@ -45,6 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setUser(null);
         }
+        console.log("Auth state changed. Current user:", firebaseUser);
         setLoading(false);
       }
     );
@@ -52,18 +53,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  const login = async () => {
+  const logout = async () => {
+    console.log('Attempting to sign out...');
     setLoading(true);
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signOut(auth);
+      console.log('Sign out successful.');
     } catch (error) {
-      console.error('Error during sign-in:', error);
+      console.error('Error during sign-out:', error);
       setLoading(false);
     }
   };
 
-  const logout = async () => {
-    await signOut(auth);
+  const login = async () => {
+    console.log('Attempting to sign in with popup...');
+    setLoading(true);
+    try {
+      await signInWithPopup(auth, googleProvider);
+      console.log('signInWithPopup successful.');
+    } catch (error) {
+      console.error('Error during sign-in:', error);
+      // In case of error, we should stop the loading state.
+      setLoading(false);
+    }
   };
 
   const value = { user, loading, login, logout, isAuthenticated: !!user };

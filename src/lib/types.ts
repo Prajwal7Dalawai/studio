@@ -17,8 +17,9 @@ export type Event = {
   date: Timestamp;
   description: string;
   status: 'upcoming' | 'past';
+ participants: string[];
   speakers: string[];
-  winners?: string[];
+ winners: string[];
   resources?: string;
   createdAt: Timestamp;
 };
@@ -31,6 +32,7 @@ export type Resource = {
   semester: string;
   subject: string;
   url: string;
+  uploadedBy: string;
   createdAt: Timestamp;
 };
 
@@ -40,4 +42,5 @@ export type PlacementContent = {
   title: string;
   content: string;
   createdAt: Timestamp;
+  uploadedBy: string;
 };

@@ -1,10 +1,14 @@
+'use client';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookCopy, Bot, Calendar, GraduationCap, Users, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Home() {
+  const { user } = useAuth();
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1">
@@ -14,6 +18,9 @@ export default function Home() {
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
                   <h1 className="font-headline text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
+                    {user && (
+                      <h2 className="text-2xl font-semibold">Welcome, {user.displayName || 'User'}</h2>
+                    )}
                     Your Ultimate <span className="text-primary">CampusCompanion</span>
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl">
