@@ -4,7 +4,7 @@ import {googleAI} from '@genkit-ai/googleai';
 // --- IMPORTANT ---
 // Please replace the placeholder value below with your actual Gemini API key.
 // You can get a key from Google AI Studio.
-const geminiApiKey = "YOUR_GEMINI_API_KEY_HERE";
+const geminiApiKey = "AIzaSyCG-KDQ43vnVhvTyF_U_mc9YKb5kij2XZk";
 
 export const ai = genkit({
   plugins: [
