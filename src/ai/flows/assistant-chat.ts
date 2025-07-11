@@ -44,12 +44,6 @@ export async function assistantChat(input: AssistantChatInput): Promise<Assistan
 
 const assistantPrompt = ai.definePrompt({
   name: 'assistantPrompt',
-  input: {
-    schema: z.object({
-      history: z.array(HistoryMessageSchema),
-      message: z.string(),
-    }),
-  },
   model: 'googleai/gemini-pro',
   system: `You are CampusCompanion AI, a friendly and helpful assistant for college students. 
       Your goal is to provide accurate and concise information related to academics, placements, and campus life. 
@@ -57,7 +51,7 @@ const assistantPrompt = ai.definePrompt({
       If a question is outside of your scope as a campus assistant, politely decline to answer.`,
   messages: [
     ...z.promptHistory('history'),
-    {role: 'user', content: [{text: '{{{message}}}'}]},
+    {role: 'user', content: [{text: '{{message}}'}]},
   ],
 });
 
