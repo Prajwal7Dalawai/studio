@@ -52,9 +52,11 @@ export default function AssistMePage() {
 
     try {
       // Format messages for the Genkit flow
-      const history: HistoryMessage[] = messages.map(msg => ({
+      const history: HistoryMessage[] = messages
+        .filter(msg => msg.id !== '1') // Exclude initial bot message from history
+        .map(msg => ({
         role: msg.sender === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.text }],
+        content: [{ text: msg.text }],
       }));
 
       const { response } = await assistantChat({ query: input, history });
