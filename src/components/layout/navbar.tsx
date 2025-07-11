@@ -147,7 +147,7 @@ export function Navbar() {
         </nav>
 
         <div className="flex flex-1 items-center justify-end space-x-4">
-          <UserMenu />
+           <UserMenu />
         </div>
       </div>
     </header>

@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { auth, googleProvider } = getFirebaseInstances();
 
   const refreshUser = useCallback(async () => {
-    if (!auth.currentUser) return;
+    if (!auth?.currentUser) return;
     const appUser = await upsertUser(auth.currentUser);
     setUser(appUser);
   }, [auth]);

@@ -5,10 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { BookCopy, Bot, Calendar, GraduationCap, Users, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useAuth } from "@/hooks/use-auth";
 
 export default function Home() {
-  const { user } = useAuth();
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1">
@@ -17,9 +15,6 @@ export default function Home() {
             <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
-                  {user && (
-                    <h2 className="text-2xl font-semibold">Welcome, {user.name || 'User'}</h2>
-                  )}
                   <h1 className="font-headline text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
                     Your Ultimate <span className="text-primary">CampusCompanion</span>
                   </h1>
