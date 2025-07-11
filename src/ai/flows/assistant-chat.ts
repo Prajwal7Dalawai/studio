@@ -52,7 +52,7 @@ const assistantChatFlow = ai.defineFlow(
   async ({ query, history }) => {
     
     const llmResponse = await ai.generate({
-      model: 'googleai/gemini-1.5-flash',
+      model: 'googleai/gemini-1.5-pro',
       prompt: query,
       history,
       config: {
