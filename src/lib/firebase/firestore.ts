@@ -8,10 +8,11 @@ import {
   type Timestamp,
 } from 'firebase/firestore';
 import type { User as FirebaseUser } from 'firebase/auth';
-import { db } from '@/lib/firebase';
+import { getFirebaseInstances } from '@/lib/firebase';
 import type { User } from '@/lib/types';
 
 export const upsertUser = async (firebaseUser: FirebaseUser) => {
+  const { db } = getFirebaseInstances();
   const userRef = doc(db, 'users', firebaseUser.uid);
   const userSnap = await getDoc(userRef);
 
@@ -51,6 +52,7 @@ export const upsertUser = async (firebaseUser: FirebaseUser) => {
 };
 
 export const updateUserProfile = async (uid: string, data: Partial<User>) => {
+  const { db } = getFirebaseInstances();
   const userRef = doc(db, 'users', uid);
   await updateDoc(userRef, data);
 };

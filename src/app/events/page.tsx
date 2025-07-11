@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { registerForEvent } from "@/lib/firebase/events";
 import { collection, getDocs, onSnapshot, query, orderBy, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { getFirebaseInstances } from "@/lib/firebase";
 import type { Event as EventType } from "@/lib/types";
 
 // Convert Firestore timestamp to a JS Date object, handling different timestamp formats.
@@ -25,8 +25,13 @@ const toDate = (timestamp: Timestamp | Date): Date => {
 export default function EventsPage() {
   const [events, setEvents] = useState<EventType[]>([]);
   const [loading, setLoading] = useState(true);
+  const { db } = getFirebaseInstances();
 
   useEffect(() => {
+    if (!db) {
+        setLoading(false);
+        return;
+    }
     const q = query(collection(db, "events"), orderBy("date", "desc"));
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -47,7 +52,7 @@ export default function EventsPage() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [db]);
 
   if (loading) {
     return (

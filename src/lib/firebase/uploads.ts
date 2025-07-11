@@ -2,8 +2,10 @@
 'use server';
 
 import { collection, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getFirebaseInstances } from '@/lib/firebase';
 import type { Event, Resource, PlacementContent } from '@/lib/types';
+
+const { db } = getFirebaseInstances();
 
 // Event Upload
 type EventInput = Omit<Event, 'id' | 'createdAt' | 'participants' | 'status' | 'date' | 'winners'> & { date: string };
@@ -42,5 +44,3 @@ export const uploadPlacementContent = async (contentData: PlacementContentInput,
         createdAt: serverTimestamp(),
     });
 };
-
-    

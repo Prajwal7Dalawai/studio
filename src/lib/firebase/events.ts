@@ -2,10 +2,11 @@
 'use server';
 
 import { doc, updateDoc, arrayUnion, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getFirebaseInstances } from '@/lib/firebase';
 import type { Event } from '@/lib/types';
 
 export const registerForEvent = async (eventId: string, userId: string) => {
+  const { db } = getFirebaseInstances();
   if (!eventId || !userId) {
     throw new Error('Event ID and User ID are required.');
   }

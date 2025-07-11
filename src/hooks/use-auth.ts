@@ -16,7 +16,7 @@ import {
   signOut,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase';
+import { getFirebaseInstances } from '@/lib/firebase';
 import { upsertUser } from '@/lib/firebase/firestore';
 import type { User } from '@/lib/types';
 
@@ -36,16 +36,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const { auth, googleProvider } = getFirebaseInstances();
 
   const refreshUser = useCallback(async () => {
-    const currentUser = auth.currentUser;
-    if (currentUser) {
-      const appUser = await upsertUser(currentUser);
-      setUser(appUser);
-    }
-  }, []);
+    if (!auth.currentUser) return;
+    const appUser = await upsertUser(auth.currentUser);
+    setUser(appUser);
+  }, [auth]);
 
   useEffect(() => {
+    // Ensure auth is initialized before using it
+    if (!auth || typeof auth.onAuthStateChanged !== 'function') {
+      setLoading(false);
+      return;
+    }
+    
     const unsubscribe = onAuthStateChanged(
       auth,
       async (firebaseUser: FirebaseUser | null) => {
@@ -60,9 +65,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [auth]);
 
   const login = async () => {
+    if (!auth || !googleProvider) return;
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
@@ -72,13 +78,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error("Authentication failed", error);
-      // setUser(null) is not needed here as onAuthStateChanged will handle it
     } finally {
       setLoading(false);
     }
   };
 
   const logout = async () => {
+    if (!auth) return;
     await signOut(auth);
     setUser(null);
   };
