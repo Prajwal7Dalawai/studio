@@ -1,7 +1,7 @@
-import type {NextConfig} from 'next';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  output: 'export', // 👈 This enables static export (`out/` folder)
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
         hostname: 'imgs.search.brave.com',
         port: '',
         pathname: '/**',
-      }
+      },
     ],
   },
 };

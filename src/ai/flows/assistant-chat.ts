@@ -11,7 +11,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 
 // Define the structure for a single message part (in this case, just text)
 const MessagePartSchema = z.object({
@@ -44,7 +44,7 @@ export async function assistantChat(input: AssistantChatInput): Promise<Assistan
 
 const assistantPrompt = ai.definePrompt({
   name: 'assistantPrompt',
-  model: 'googleai/gemini-1.0-pro',
+  model: 'googleai/gemini-2.5-pro',
   system: `You are CampusCompanion AI, a friendly and helpful assistant for college students. 
       Your goal is to provide accurate and concise information related to academics, placements, and campus life. 
       Keep your responses helpful and encouraging.
