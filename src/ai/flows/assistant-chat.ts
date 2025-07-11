@@ -53,16 +53,21 @@ const assistantChatFlow = ai.defineFlow(
     
     const llmResponse = await ai.generate({
       model: 'googleai/gemini-pro',
-      prompt: query,
-      history,
+      messages: [
+        {
+          role: 'system',
+          content: `You are CampusCompanion AI, a friendly and helpful assistant for college students. 
+      Your goal is to provide accurate and concise information related to academics, placements, and campus life. 
+      Keep your responses helpful and encouraging.
+      If a question is outside of your scope as a campus assistant, politely decline to answer.`
+        },
+        ...history,
+        { role: 'user', parts: [{ text: query }] },
+      ],
       config: {
         // You can adjust safety settings if needed
         // safetySettings: [{category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE'}]
       },
-      system: `You are CampusCompanion AI, a friendly and helpful assistant for college students. 
-      Your goal is to provide accurate and concise information related to academics, placements, and campus life. 
-      Keep your responses helpful and encouraging.
-      If a question is outside of your scope as a campus assistant, politely decline to answer.`,
     });
 
     const responseText = llmResponse.text;
