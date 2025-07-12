@@ -12,33 +12,36 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
-let app: FirebaseApp;
-let auth: Auth;
-let db: Firestore;
-let storage: FirebaseStorage;
-let googleProvider: GoogleAuthProvider;
+function createFirebaseInstances() {
+  let app: FirebaseApp;
+  let auth: Auth;
+  let db: Firestore;
+  let storage: FirebaseStorage;
+  let googleProvider: GoogleAuthProvider;
 
+  if (getApps().length === 0) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApp();
+  }
 
-if (typeof window !== 'undefined') {
-    if (!getApps().length) {
-        app = initializeApp(firebaseConfig);
-    } else {
-        app = getApp();
-    }
-    auth = getAuth(app);
-    db = getFirestore(app);
-    storage = getStorage(app);
-    googleProvider = new GoogleAuthProvider();
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
+  googleProvider = new GoogleAuthProvider();
+
+  return { app, auth, db, storage, googleProvider };
 }
 
+// Use lazy initialization to avoid issues in different environments
+let firebaseInstances: ReturnType<typeof createFirebaseInstances>;
 
-// Export a function to get the initialized instances
 const getFirebaseInstances = () => {
-    // This function can now safely be called, but will only return instances on the client.
-    // For server-side, it will return undefined. Code using it must handle this.
-    return { app, auth, db, storage, googleProvider };
+  if (!firebaseInstances) {
+    firebaseInstances = createFirebaseInstances();
+  }
+  return firebaseInstances;
 };
 
-
-export { getFirebaseInstances, app, auth, db, storage, googleProvider };
+export { getFirebaseInstances };
+export const { app, auth, db, storage, googleProvider } = getFirebaseInstances();
